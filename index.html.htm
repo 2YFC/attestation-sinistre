@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a2744">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Attestation Sinistralité</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1a2744; --navy-mid:#243460;
+    --gold:#c9a84c; --gold-light:#e8c97e;
+    --cream:#faf8f3; --text:#1a2744;
+    --muted:#6b7280; --white:#ffffff;
+    --danger:#c0392b; --success:#1a6b47;
+    --radius:12px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;}
+
+  .header{background:var(--navy);padding:20px 24px;display:flex;align-items:center;gap:14px;}
+  .header-logo{width:40px;height:40px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:20px;color:var(--navy);font-weight:600;}
+  .header-title h1{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--white);}
+  .header-title p{font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px;}
+
+  .progress-wrap{background:var(--navy-mid);padding:14px 24px;display:flex;align-items:center;gap:12px;}
+  .progress-bar-bg{flex:1;height:4px;background:rgba(255,255,255,0.15);border-radius:4px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .5s ease;width:0%;}
+  .progress-label{color:rgba(255,255,255,0.6);font-size:12px;white-space:nowrap;}
+
+  .content{max-width:600px;margin:0 auto;padding:32px 20px 60px;}
+  .step{display:none;animation:fadeIn .35s ease;}
+  .step.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  .step-num{font-size:11px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+  .step-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--navy);line-height:1.3;margin-bottom:8px;}
+  .step-sub{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+
+  .field{margin-bottom:20px;}
+  .field label{display:block;font-size:13px;font-weight:500;color:var(--navy);margin-bottom:6px;}
+  .field input,.field select{width:100%;padding:14px 16px;background:var(--white);border:1.5px solid #ddd6c4;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);transition:border-color .2s;outline:none;min-height:48px;-webkit-appearance:none;appearance:none;}
+  .field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12);}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+  .err{color:var(--danger);font-size:12px;margin-top:4px;display:none;}
+
+  .radio-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:28px;}
+  .radio-card{background:var(--white);border:2px solid #ddd6c4;border-radius:var(--radius);padding:18px 20px;cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:14px;}
+  .radio-card:hover{border-color:var(--gold-light);background:#fdfbf5;}
+  .radio-card.selected{border-color:var(--gold);background:#fdfbf5;}
+  .radio-dot{width:20px;height:20px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .radio-card.selected .radio-dot{border-color:var(--gold);background:var(--gold);}
+  .radio-dot::after{content:'';width:8px;height:8px;border-radius:50%;background:white;opacity:0;transition:opacity .2s;}
+  .radio-card.selected .radio-dot::after{opacity:1;}
+  .radio-card-body h3{font-size:15px;font-weight:500;color:var(--navy);}
+  .radio-card-body p{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5;}
+
+  .sinistres-list{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+  .sinistre-row{background:var(--white);border:1.5px solid #ddd6c4;border-radius:var(--radius);padding:16px;}
+  .sinistre-row-title{font-size:12px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+  .sinistre-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+  @media(min-width:480px){.sinistre-grid{grid-template-columns:1fr 1fr;}}
+  .sinistre-grid .field{margin-bottom:0;}
+  .remove-btn{background:none;border:none;color:#e74c3c;font-size:13px;cursor:pointer;padding:8px 0 2px;font-family:'DM Sans',sans-serif;text-decoration:underline;margin-top:4px;-webkit-tap-highlight-color:transparent;}
+
+  .btn-row{display:flex;gap:12px;margin-top:8px;}
+  .btn-next{flex:1;background:var(--navy);color:var(--white);border:none;border-radius:var(--radius);padding:15px 24px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;cursor:pointer;transition:background .2s;min-height:52px;-webkit-tap-highlight-color:transparent;}
+  .btn-next:hover{background:var(--navy-mid);}
+  .btn-next.gold{background:var(--gold);color:var(--navy);}
+  .btn-next.gold:hover{background:var(--gold-light);}
+  .btn-back{background:none;border:1.5px solid #ddd6c4;border-radius:var(--radius);padding:15px 20px;font-family:'DM Sans',sans-serif;font-size:16px;cursor:pointer;color:var(--muted);transition:all .2s;min-height:52px;-webkit-tap-highlight-color:transparent;}
+  .btn-back:hover{border-color:#aaa;color:var(--text);}
+  .add-btn{background:none;border:2px dashed var(--gold);border-radius:var(--radius);padding:16px;width:100%;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:var(--gold);cursor:pointer;transition:all .2s;margin-bottom:28px;min-height:52px;-webkit-tap-highlight-color:transparent;}
+  .add-btn:hover{background:rgba(201,168,76,.06);}
+
+  /* LU ET APPROUVÉ */
+  .lue-field{background:var(--white);border:1.5px solid #ddd6c4;border-radius:var(--radius);padding:16px;margin-bottom:20px;}
+  .lue-field>label{font-size:13px;font-weight:500;color:var(--navy);display:block;margin-bottom:10px;}
+  .lue-btns{display:flex;gap:10px;}
+  .lue-btn{flex:1;padding:14px;border-radius:8px;border:2px solid #ddd6c4;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--white);color:var(--muted);-webkit-tap-highlight-color:transparent;text-align:center;}
+  .lue-btn.selected{border-color:var(--gold);background:#fdfbf5;color:var(--navy);}
+
+  /* SIGNATURE PAD */
+  .sign-pad-wrap{background:var(--white);border:1.5px solid #ddd6c4;border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+  .sign-pad-header{background:#f7f4ec;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ddd6c4;}
+  .sign-pad-header span{font-size:13px;font-weight:500;color:var(--navy);}
+  .sign-pad-clear{background:none;border:1px solid #ddd6c4;border-radius:6px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .2s;min-height:36px;}
+  .sign-pad-clear:hover{border-color:#aaa;color:var(--text);}
+  #signature-canvas{display:block;width:100%;height:170px;cursor:crosshair;touch-action:none;background:var(--white);}
+  .sign-pad-hint{font-size:12px;color:var(--muted);text-align:center;padding:9px 16px;background:#fdfbf5;border-top:1px solid #f0ece0;}
+  .sign-status{font-size:12px;margin-top:5px;margin-bottom:16px;display:none;}
+  .sign-status.ok{color:var(--success);display:block;}
+
+  /* RÉSULTAT */
+  #result-wrap{display:none;}
+  .notice-bar{background:#fef9ec;border:1px solid var(--gold-light);border-radius:var(--radius);padding:14px 18px;font-size:13px;color:#7a5c0a;margin-bottom:24px;line-height:1.6;}
+  .result-header{background:var(--navy);border-radius:var(--radius) var(--radius) 0 0;padding:24px 28px;display:flex;align-items:center;gap:16px;}
+  .result-icon{font-size:28px;}
+  .result-header-text h2{font-family:'Playfair Display',serif;color:var(--white);font-size:18px;}
+  .result-header-text p{color:rgba(255,255,255,.55);font-size:13px;margin-top:3px;}
+
+  .attestation-doc{background:var(--white);border:1.5px solid #ddd6c4;border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:32px 36px;font-family:'Times New Roman',serif;font-size:13px;line-height:1.9;color:#111;}
+  .attestation-doc h3{font-size:14px;font-weight:bold;text-align:center;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+  .attestation-doc .subtitle{font-size:11px;text-align:center;color:#555;font-style:italic;margin-bottom:24px;}
+  .attestation-doc .field-line{border-bottom:1px solid #aaa;display:inline-block;min-width:200px;margin-left:4px;}
+  .attestation-doc table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px;}
+  .attestation-doc table th{background:#f0ece0;border:1px solid #ccc;padding:6px 10px;text-align:left;font-weight:bold;}
+  .attestation-doc table td{border:1px solid #ccc;padding:6px 10px;vertical-align:top;}
+  .attestation-doc .warning{font-size:11px;color:#555;font-style:italic;margin:16px 0 8px;}
+  .attestation-doc .sign-area{margin-top:24px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+  .attestation-doc .sign-block{text-align:center;}
+  .sign-img-wrap{border:1px solid #aaa;width:200px;min-height:75px;margin-top:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .sign-img-wrap img{max-width:100%;max-height:95px;display:block;}
+  .sign-img-wrap .no-sign{font-size:10px;color:#aaa;font-style:italic;font-family:'DM Sans',sans-serif;}
+  .lue-text{font-weight:bold;font-size:13px;margin-top:6px;font-family:'Times New Roman',serif;}
+
+  .action-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+  .action-btn{flex:1;min-width:140px;padding:13px;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s;text-align:center;}
+  .action-btn.print{background:var(--navy);color:var(--white);}
+  .action-btn.print:hover{background:var(--navy-mid);}
+  .action-btn.restart{background:none;border:1.5px solid #ddd6c4;color:var(--muted);}
+  .action-btn.restart:hover{border-color:#aaa;color:var(--text);}
+
+  @media(max-width:500px){
+    .attestation-doc{padding:20px 16px;}
+    .attestation-doc table thead{display:none;}
+    .attestation-doc table tr{display:block;border:1px solid #ccc;margin-bottom:10px;border-radius:6px;overflow:hidden;}
+    .attestation-doc table td{display:flex;justify-content:space-between;border:none;border-bottom:1px solid #eee;padding:8px 12px;}
+    .attestation-doc table td::before{content:attr(data-label);font-weight:bold;color:#555;margin-right:8px;}
+    .attestation-doc .sign-area{flex-direction:column;align-items:flex-start;}
+    .sign-img-wrap{width:100%;}
+  }
+
+  @media print {
+    body{background:white;}
+    .header,.progress-wrap,.action-row,.notice-bar,#form-wrap{display:none !important;}
+    #result-wrap{display:block !important;}
+    .result-header{background:#1a2744 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .attestation-doc{border:none;padding:0;font-size:11pt;}
+    .attestation-doc table{font-size:10pt;}
+    .sign-area{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">A</div>
+  <div class="header-title">
+    <h1>Attestation Sinistralité</h1>
+    <p>Remplissage assisté — ARCOL</p>
+  </div>
+</div>
+
+<div class="progress-wrap" id="progress-wrap">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="progress-label" id="progress-label">Étape 1 / 5</span>
+</div>
+
+<div class="content">
+<div id="form-wrap">
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step-1">
+    <div class="step-num">Étape 1</div>
+    <div class="step-title">Type d'attestation</div>
+    <div class="step-sub">Y a-t-il eu des sinistres sur ce bien au cours des 36 derniers mois ?</div>
+    <div class="radio-cards">
+      <div class="radio-card" onclick="selectType('non')">
+        <div class="radio-dot" id="dot-non"></div>
+        <div class="radio-card-body">
+          <h3>Aucun sinistre</h3>
+          <p>Le bien n'a fait l'objet d'aucun sinistre, réclamation ou litige durant les 36 derniers mois.</p>
+        </div>
+      </div>
+      <div class="radio-card" onclick="selectType('oui')">
+        <div class="radio-dot" id="dot-oui"></div>
+        <div class="radio-card-body">
+          <h3>Un ou plusieurs sinistres</h3>
+          <p>Des sinistres ont eu lieu et doivent être déclarés dans l'attestation.</p>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-next" onclick="goStep(2)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step-2">
+    <div class="step-num">Étape 2</div>
+    <div class="step-title">Identité du déclarant</div>
+    <div class="step-sub">Informations personnelles du soussigné.</div>
+    <div class="field">
+      <label>Nom et prénom *</label>
+      <input type="text" id="nom" placeholder="Ex : Martin Jean-Pierre" autocomplete="name" inputmode="text">
+      <div class="err" id="err-nom">Ce champ est requis.</div>
+    </div>
+    <div class="field">
+      <label>Qualité *</label>
+      <select id="qualite">
+        <option value="">-- Sélectionner --</option>
+        <option value="Propriétaire non occupant">Propriétaire non occupant</option>
+        <option value="Société Civile Immobilière">Société Civile Immobilière</option>
+        <option value="Syndic de copropriété">Syndic de copropriété</option>
+      </select>
+      <div class="err" id="err-qualite">Ce champ est requis.</div>
+    </div>
+    <div class="field">
+      <label>Adresse du déclarant *</label>
+      <input type="text" id="adresse-declarant" placeholder="Ex : 12 rue des Lilas, 75010 Paris" autocomplete="street-address">
+      <div class="err" id="err-adresse-declarant">Ce champ est requis.</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goStep(1)">← Retour</button>
+      <button class="btn-next" onclick="goStep(3)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step-3">
+    <div class="step-num">Étape 3</div>
+    <div class="step-title">Bien à assurer</div>
+    <div class="step-sub">Adresse du bien immobilier concerné par l'attestation.</div>
+    <div class="field">
+      <label>Adresse complète du bien *</label>
+      <input type="text" id="adresse-bien" placeholder="Ex : 5 avenue Victor Hugo, 69003 Lyon" autocomplete="off">
+      <div class="err" id="err-adresse-bien">Ce champ est requis.</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goStep(2)">← Retour</button>
+      <button class="btn-next" onclick="goStep(4)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" id="step-4">
+    <div class="step-num">Étape 4</div>
+    <div class="step-title" id="step4-title">Sinistres déclarés</div>
+    <div class="step-sub" id="step4-sub">Renseignez chaque sinistre survenu lors des 36 derniers mois.</div>
+    <div id="sinistres-list" class="sinistres-list"></div>
+    <button class="add-btn" id="add-sinistre-btn" onclick="addSinistre()">+ Ajouter un sinistre</button>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goStep(3)">← Retour</button>
+      <button class="btn-next" onclick="goStep(5)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 : Signature -->
+  <div class="step" id="step-5">
+    <div class="step-num">Étape 5</div>
+    <div class="step-title">Signature</div>
+    <div class="step-sub">Renseignez la date, confirmez la lecture, puis faites signer le client avec son doigt.</div>
+
+    <div class="field">
+      <label>Fait à (ville) *</label>
+      <input type="text" id="ville" placeholder="Ex : Paris" inputmode="text" autocomplete="address-level2">
+      <div class="err" id="err-ville">Ce champ est requis.</div>
+    </div>
+    <div class="field">
+      <label>Le (date) *</label>
+      <input type="date" id="date-sign">
+      <div class="err" id="err-date">Ce champ est requis.</div>
+    </div>
+
+    <div class="lue-field">
+      <label>Confirmation de lecture *</label>
+      <div class="lue-btns">
+        <button class="lue-btn" id="lue-oui" onclick="setLue(true)">✓ Lu et approuvé</button>
+        <button class="lue-btn" id="lue-non" onclick="setLue(false)">✗ Refus</button>
+      </div>
+    </div>
+
+    <div class="sign-pad-wrap">
+      <div class="sign-pad-header">
+        <span>✍️ Signature du client</span>
+        <button class="sign-pad-clear" onclick="clearSignature()">Effacer</button>
+      </div>
+      <canvas id="signature-canvas"></canvas>
+      <div class="sign-pad-hint">Signez avec le doigt ou la souris dans cette zone</div>
+    </div>
+    <div class="sign-status" id="sign-status"></div>
+
+    <div class="btn-row">
+      <button class="btn-back" onclick="goStep(4)">← Retour</button>
+      <button class="btn-next gold" onclick="generer()">Générer l'attestation ✓</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- RÉSULTAT -->
+<div id="result-wrap">
+  <div class="notice-bar">
+    ✅ Attestation générée et signée. Imprimez ce document ou sauvegardez-le en PDF depuis votre navigateur (Partager → Imprimer sur iOS).
+  </div>
+  <div class="result-header">
+    <span class="result-icon">📄</span>
+    <div class="result-header-text">
+      <h2 id="result-title">Attestation sur l'honneur</h2>
+      <p id="result-subtitle">Signée et prête à archiver</p>
+    </div>
+  </div>
+  <div class="attestation-doc" id="attestation-doc"></div>
+  <div class="action-row">
+    <button class="action-btn print" onclick="window.print()">🖨️ Imprimer / PDF</button>
+    <button class="action-btn restart" onclick="location.reload()">← Nouvelle attestation</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+  let typeAttestation = null, currentStep = 1, sinistreCount = 0, lueApprouve = null;
+  const TOTAL = 5;
+  let canvas, ctx, drawing = false, lastX = 0, lastY = 0, hasDrawn = false;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('date-sign').value = new Date().toISOString().split('T')[0];
+    updateProgress();
+    initPad();
+  });
+
+  function updateProgress() {
+    document.getElementById('progress-fill').style.width = ((currentStep-1)/(TOTAL-1)*100) + '%';
+    document.getElementById('progress-label').textContent = 'Étape ' + currentStep + ' / ' + TOTAL;
+  }
+
+  function selectType(val) {
+    typeAttestation = val;
+    document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.radio-card')[val==='oui'?1:0].classList.add('selected');
+  }
+
+  function setLue(val) {
+    lueApprouve = val;
+    document.getElementById('lue-oui').classList.toggle('selected', val===true);
+    document.getElementById('lue-non').classList.toggle('selected', val===false);
+  }
+
+  function show(id, v) { document.getElementById(id).style.display = v?'block':'none'; }
+
+  function validate(step) {
+    let ok = true;
+    if (step===1 && !typeAttestation) { alert('Veuillez sélectionner un type.'); return false; }
+    if (step===2) {
+      ['nom','qualite','adresse-declarant'].forEach(id => {
+        const val = document.getElementById(id).value.trim();
+        const eid = 'err-' + (id==='adresse-declarant'?'adresse-declarant':id);
+        if (!val) { show(eid,true); ok=false; } else show(eid,false);
+      });
+    }
+    if (step===3) {
+      const b = document.getElementById('adresse-bien').value.trim();
+      if (!b) { show('err-adresse-bien',true); ok=false; } else show('err-adresse-bien',false);
+    }
+    if (step===5) {
+      const v = document.getElementById('ville').value.trim();
+      const d = document.getElementById('date-sign').value;
+      if (!v) { show('err-ville',true); ok=false; } else show('err-ville',false);
+      if (!d) { show('err-date',true); ok=false; } else show('err-date',false);
+    }
+    return ok;
+  }
+
+  function goStep(n) {
+    if (n > currentStep && !validate(currentStep)) return;
+    if (n===4) {
+      const noSin = typeAttestation==='non';
+      document.getElementById('step4-title').textContent = noSin ? 'Aucun sinistre à déclarer' : 'Sinistres déclarés';
+      document.getElementById('step4-sub').textContent = noSin ? 'Aucun sinistre déclaré. Cliquez sur Continuer.' : 'Renseignez chaque sinistre survenu lors des 36 derniers mois.';
+      document.getElementById('add-sinistre-btn').style.display = noSin ? 'none' : 'block';
+      if (!noSin && sinistreCount===0) addSinistre();
+    }
+    document.getElementById('step-'+currentStep).classList.remove('active');
+    currentStep = n;
+    document.getElementById('step-'+n).classList.add('active');
+    updateProgress();
+    window.scrollTo({top:0,behavior:'smooth'});
+    if (n===5) setTimeout(resizePad, 80);
+  }
+
+  function addSinistre() {
+    sinistreCount++;
+    const id = sinistreCount;
+    const div = document.createElement('div');
+    div.className='sinistre-row'; div.id='sinistre-'+id;
+    div.innerHTML=`<div class="sinistre-row-title">Sinistre n°${id}</div>
+      <div class="sinistre-grid">
+        <div class="field"><label>Date</label><input type="date" id="sin-date-${id}"></div>
+        <div class="field"><label>Type</label><select id="sin-type-${id}">
+          <option value="">-- Type --</option><option>Dégât des eaux</option><option>Incendie</option>
+          <option>Vol / Vandalisme</option><option>Bris de glace</option>
+          <option>Catastrophe naturelle</option><option>Responsabilité civile</option><option>Autre</option>
+        </select></div>
+        <div class="field"><label>Coût estimé (€)</label><input type="text" id="sin-cout-${id}" placeholder="Ex : 1 200 €" inputmode="decimal"></div>
+        <div class="field"><label>Dossier clos ?</label><select id="sin-clos-${id}"><option>Oui</option><option>Non</option><option>En cours</option></select></div>
+      </div>
+      <button class="remove-btn" onclick="removeSinistre(${id})">Supprimer ce sinistre</button>`;
+    document.getElementById('sinistres-list').appendChild(div);
+  }
+
+  function removeSinistre(id) { const el=document.getElementById('sinistre-'+id); if(el) el.remove(); }
+
+  function fmtDate(d) { if(!d) return '…'; const [y,m,j]=d.split('-'); return `${j}/${m}/${y}`; }
+
+  /* ---- SIGNATURE PAD ---- */
+  function initPad() {
+    canvas = document.getElementById('signature-canvas');
+    ctx = canvas.getContext('2d');
+    resizePad();
+    canvas.addEventListener('mousedown', e => { drawing=true; const p=pos(e); lastX=p.x; lastY=p.y; ctx.beginPath(); ctx.moveTo(p.x,p.y); });
+    canvas.addEventListener('mousemove', e => { if(!drawing) return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; markSigned(); });
+    canvas.addEventListener('mouseup', ()=>drawing=false);
+    canvas.addEventListener('mouseleave', ()=>drawing=false);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; const t=e.touches[0]; const p=pos(t); lastX=p.x; lastY=p.y; ctx.beginPath(); ctx.moveTo(p.x,p.y); }, {passive:false});
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if(!drawing) return; const t=e.touches[0]; const p=pos(t); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; markSigned(); }, {passive:false});
+    canvas.addEventListener('touchend', ()=>drawing=false, {passive:false});
+  }
+
+  function resizePad() {
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio||1;
+    const w = canvas.offsetWidth;
+    canvas.width = w*dpr; canvas.height = 170*dpr;
+    canvas.style.height = '170px';
+    ctx.scale(dpr,dpr);
+    ctx.strokeStyle='#1a2744'; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+  }
+
+  function pos(e) { const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+
+  function markSigned() {
+    hasDrawn = true;
+    const s = document.getElementById('sign-status');
+    s.className='sign-status ok'; s.textContent='✓ Signature enregistrée';
+  }
+
+  function clearSignature() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    hasDrawn=false;
+    const s=document.getElementById('sign-status'); s.className='sign-status'; s.textContent='';
+  }
+
+  /* ---- GÉNÉRATION ---- */
+  function generer() {
+    if (!validate(5)) return;
+    if (lueApprouve===null) { alert('Veuillez confirmer la lecture du document.'); return; }
+
+    const nom = document.getElementById('nom').value.trim();
+    const qualite = document.getElementById('qualite').value;
+    const adrDecl = document.getElementById('adresse-declarant').value.trim();
+    const adrBien = document.getElementById('adresse-bien').value.trim();
+    const ville = document.getElementById('ville').value.trim();
+    const dateSign = fmtDate(document.getElementById('date-sign').value);
+    const sigData = hasDrawn ? canvas.toDataURL('image/png') : null;
+
+    const lueHTML = lueApprouve
+      ? '<div class="lue-text">LU ET APPROUVÉ</div>'
+      : '<div class="lue-text" style="color:#c0392b">Non confirmé</div>';
+
+    const signHTML = sigData
+      ? `<div class="sign-img-wrap"><img src="${sigData}" alt="Signature du client"/></div>`
+      : `<div class="sign-img-wrap"><span class="no-sign">Aucune signature tracée</span></div>`;
+
+    const signBlock = `<div class="sign-block">
+      <div style="font-size:12px">Faire précéder la signature de :<br><em>« LU ET APPROUVÉ »</em></div>
+      ${lueHTML}${signHTML}
+    </div>`;
+
+    let doc = '';
+    if (typeAttestation==='non') {
+      document.getElementById('result-title').textContent='Attestation de non-sinistralité';
+      document.getElementById('result-subtitle').textContent='Aucun sinistre sur les 36 derniers mois';
+      doc=`<h3>Attestation sur l'honneur de non-sinistralité</h3>
+        <div class="subtitle">à ne fournir qu'en cas d'impossibilité avérée d'obtenir un relevé d'information officiel</div>
+        <p>Je soussigné(e)&nbsp;<span class="field-line"><strong>${nom}</strong></span></p>
+        <p>agissant en qualité de&nbsp;<span class="field-line"><strong>${qualite}</strong></span></p>
+        <p>demeurant&nbsp;<span class="field-line"><strong>${adrDecl}</strong></span></p><br>
+        <p>atteste sur l'honneur que le bien indiqué ci-dessous à assurer <strong>n'a fait l'objet d'aucun sinistre, ni réclamation, ni mise en cause, ni litige</strong> susceptible d'entraîner la mise en jeu d'une des garanties d'un contrat multirisques immeuble au cours des <strong>36 mois précédents ce jour.</strong></p><br>
+        <p><strong>Bien à assurer :</strong>&nbsp;<span class="field-line"><strong>${adrBien}</strong></span></p><br>
+        <p class="warning">Toutes réticences ou fausses déclarations sont susceptibles d'entraîner l'application des sanctions prévues par l'article L113-8 du Code des Assurances.</p>
+        <p class="warning">La présente attestation pourra être produite en justice et je reconnais qu'une fausse déclaration de ma part peut m'exposer à des sanctions pénales.</p>
+        <div class="sign-area">
+          <div class="sign-block"><div>Fait à&nbsp;<strong>${ville}</strong>&nbsp;le&nbsp;<strong>${dateSign}</strong></div></div>
+          ${signBlock}
+        </div>`;
+    } else {
+      const rows = document.querySelectorAll('.sinistre-row');
+      let tRows = '';
+      rows.forEach(row => {
+        const id=row.id.split('-')[1];
+        const d=fmtDate(document.getElementById('sin-date-'+id)?.value);
+        const t=document.getElementById('sin-type-'+id)?.value||'…';
+        const c=document.getElementById('sin-cout-'+id)?.value||'…';
+        const cl=document.getElementById('sin-clos-'+id)?.value||'…';
+        tRows+=`<tr><td data-label="Date">${d}</td><td data-label="Type">${t}</td><td data-label="Coût">${c}</td><td data-label="Clos">${cl}</td></tr>`;
+      });
+      if(!tRows) tRows='<tr><td colspan="4" style="text-align:center;color:#888;font-style:italic">Aucun sinistre renseigné</td></tr>';
+      document.getElementById('result-title').textContent='Attestation de sinistralité';
+      document.getElementById('result-subtitle').textContent='Sinistres des 36 derniers mois déclarés';
+      doc=`<h3>Attestation sur l'honneur de sinistralité</h3>
+        <div class="subtitle">à ne fournir qu'en cas d'impossibilité avérée d'obtenir un relevé d'information officiel</div>
+        <p>Je soussigné(e)&nbsp;<span class="field-line"><strong>${nom}</strong></span></p>
+        <p>agissant en qualité de&nbsp;<span class="field-line"><strong>${qualite}</strong></span></p>
+        <p>demeurant&nbsp;<span class="field-line"><strong>${adrDecl}</strong></span></p><br>
+        <p>atteste sur l'honneur que le bien indiqué ci-dessous à assurer <strong>n'a fait l'objet que des sinistres suivants</strong> durant les 36 mois précédant ce jour :</p>
+        <table><thead><tr><th>Date</th><th>Type de sinistre</th><th>Coût</th><th>Clos</th></tr></thead><tbody>${tRows}</tbody></table>
+        <p><strong>Bien à assurer :</strong>&nbsp;<span class="field-line"><strong>${adrBien}</strong></span></p><br>
+        <p class="warning">Toutes réticences ou fausses déclarations sont susceptibles d'entraîner l'application des sanctions prévues par l'article L113-8 du Code des Assurances.</p>
+        <p class="warning">La présente attestation pourra être produite en justice et je reconnais qu'une fausse déclaration de ma part peut m'exposer à des sanctions pénales.</p>
+        <div class="sign-area">
+          <div class="sign-block"><div>Fait à&nbsp;<strong>${ville}</strong>&nbsp;le&nbsp;<strong>${dateSign}</strong></div></div>
+          ${signBlock}
+        </div>`;
+    }
+
+    document.getElementById('attestation-doc').innerHTML = doc;
+    document.getElementById('form-wrap').style.display='none';
+    document.getElementById('progress-wrap').style.display='none';
+    document.getElementById('result-wrap').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
